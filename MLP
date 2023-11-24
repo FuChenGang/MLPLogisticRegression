@@ -1,31 +1,103 @@
 import numpy as np
 import math
 class MLPLogisticRegression:
-    def data_proccessed(self,target):#修改为one of k encoding
+    w_matrix = None
+    target_type = None
+    target_type_one_of_k = None
+    target_proccessed = None
+
+
+    def __init__(self,x,t):
+        self.data_proccessed_target(t)
+        n = len(self.target_type)
+        k = len(x[0])
+        self.w_matrix = np.zeros([n,k+1])
+
+
+    def data_proccessed_x(self,x):#将矩阵x拓展一列用来乘偏置项w0
+        a = x.shape
+        x_proccessed = np.ones([a[0],a[1]+1])
+        x_proccessed[:,1:] = x
+        return x_proccessed
+
+    def data_proccessed_target(self,target):#将target修改为one of k encoding并记录对应关系
         target_type = set()
         for i in target:
             target_type.add(i)
         target_type = list(target_type)
+        self.target_type = target_type#记录
         n = len(target_type)
         target_type_proccessed = []
         a = 0
         while a < n:
             ar = np.zeros(n)
-            ar[a] = 0
+            ar[a] = 1
             target_type_proccessed.append(ar)
             a = a + 1
+        self.target_type_one_of_k = target_type_proccessed
         c = len(target)
         b = 0
+        outcome = []
         while b < c:
-            
             m = 0
             while m < n:
                 if target[b] == target_type[m]:
-                    target[b] = target_type_proccessed[m]
+                    outcome.append(target_type_proccessed[m])
                     break
                 m = m+1
             b = b + 1
-        return target
+        outcome = np.array(outcome)
+        self.target_proccessed = outcome
+
+        
+        
+        return outcome
     
-    def predict(self):
-        return
+    def train(self,x,t):
+        
+    
+
+    
+    def predict(self,x):
+        x_matrix = self.data_proccessed_x(x)
+        z_matrix = self.w_matrix.dot(x_matrix.T)
+        z_matrix = z_matrix.T#转置 
+        z1_matrix = np.exp(z_matrix)#指数处理
+        a = 0
+        for i in z1_matrix:
+            #denominator.append(np.sum(i))
+            z1_matrix[a] = z1_matrix[a] / np.sum(i)
+            a = a + 1
+        y = np.zeros(list(z1_matrix.shape))
+        a = 0
+        for i in z1_matrix:
+            b = 0
+            max = np.max(i)
+            for j in i:
+                if j == max:
+                    y[a][b] = 1
+                    break
+                b = b + 1
+            a = a + 1
+        output = []
+        for i in y:
+            a = 0
+            for j in self.target_type_one_of_k:
+                if (i == j).all:
+                    output.append(self.target_type[a])
+                    break
+                a  = a + 1
+        return output
+            
+
+        
+    
+#test:
+
+filepath = "C:\\Users\\86136\\Desktop\\杂物\\人工智能与机器学习\\作业\\作业8\\缩减集\\optdigits.tra"
+data = np.loadtxt(filepath,dtype = int,delimiter=',')
+x = data[:,0:-1]
+target = data[:,-1]
+MLP = MLPLogisticRegression(x,target)
+
+print(MLP.predict(x))
