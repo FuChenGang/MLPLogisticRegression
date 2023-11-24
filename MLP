@@ -1,7 +1,31 @@
 import numpy as np
 import math
 class MLPLogisticRegression:
-    def data_proccessed(self):
-        return
+    def data_proccessed(self,target):#修改为one of k encoding
+        target_type = set()
+        for i in target:
+            target_type.add(i)
+        target_type = list(target_type)
+        n = len(target_type)
+        target_type_proccessed = []
+        a = 0
+        while a < n:
+            ar = np.zeros(n)
+            ar[a] = 0
+            target_type_proccessed.append(ar)
+            a = a + 1
+        c = len(target)
+        b = 0
+        while b < c:
+            
+            m = 0
+            while m < n:
+                if target[b] == target_type[m]:
+                    target[b] = target_type_proccessed[m]
+                    break
+                m = m+1
+            b = b + 1
+        return target
+    
     def predict(self):
         return
