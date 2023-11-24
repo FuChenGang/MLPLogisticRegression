@@ -3,3 +3,5 @@ import math
 class MLPLogisticRegression:
     def data_proccessed(self):
         return
+    def predict(self):
+        return
