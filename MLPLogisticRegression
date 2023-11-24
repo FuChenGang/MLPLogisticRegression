@@ -1,0 +1,203 @@
+
+import numpy as np
+import math
+class MLPLogisticRegression:
+    w_matrix = None
+    target_type = None
+    target_type_one_of_k = None
+    target_proccessed = None
+    x_train = None
+    learning_rate = 0
+
+
+    def __init__(self,x,t,learning_rate):
+        self.data_proccessed_target(t)
+        n = len(self.target_type)#n为分类数量
+        k = len(x[0])#k为x的feature数
+        self.x_train = x
+        self.w_matrix = np.zeros([n,k+1])
+        self.learning_rate = learning_rate
+
+
+    def data_proccessed_x(self,x):#将矩阵x拓展一列用来乘偏置项w0
+        a = x.shape
+        x_proccessed = np.ones([a[0],a[1]+1])
+        x_proccessed[:,1:] = x
+        return x_proccessed
+
+    def data_proccessed_target(self,target):#将target修改为one of k encoding并记录对应关系
+        target_type = set()
+        for i in target:
+            target_type.add(i)
+        target_type = list(target_type)
+        self.target_type = target_type#记录
+        n = len(target_type)
+        target_type_proccessed = []
+        a = 0
+        while a < n:
+            ar = np.zeros(n)
+            ar[a] = 1
+            target_type_proccessed.append(ar)
+            a = a + 1
+        self.target_type_one_of_k = target_type_proccessed
+        c = len(target)
+        b = 0
+        outcome = []
+        while b < c:
+            m = 0
+            while m < n:
+                if target[b] == target_type[m]:
+                    outcome.append(target_type_proccessed[m])
+                    break
+                m = m+1
+            b = b + 1
+        outcome = np.array(outcome)
+        self.target_proccessed = outcome
+        return outcome
+    
+    
+
+    def train(self,x,t):
+        self.__init__(x,t,self.learning_rate)
+        shape = self.w_matrix.shape
+        m = shape[0]
+        n = shape[1]
+        cross_entropy = math.inf
+        terminate = 0
+        x_matrix = self.data_proccessed_x(self.x_train)
+        derivative_matrix = np.zeros([m,n])
+        while cross_entropy > 0.05:#训练继续进行的条件
+            
+            z_matrix = self.w_matrix.dot(x_matrix.T)
+            z_matrix = z_matrix.T#转置 
+            z1_matrix = np.exp(z_matrix)#指数处理
+            
+            y = z1_matrix
+            a = 0
+            for i in z1_matrix:
+                y[a] = z1_matrix[a] / np.sum(i)
+                a = a + 1
+            
+            #regulazation = np.sum(self.w_matrix * self.w_matrix)
+            #print("正则项:",regulazation)
+            #print("cross_entropy正常计算:",self.cross_entropy(y,self.target_proccessed))
+            #cross_entropy = self.cross_entropy(y,self.target_proccessed) + regulazation#正则化
+            cross_entropy = self.cross_entropy(y,self.target_proccessed)
+
+            print(f"cross-entropy{terminate}:",cross_entropy)
+
+
+
+            
+            k = 0
+            
+            while k < m:
+                i = 0
+                
+                while i < n :
+                    
+                    #derivative_matrix[k][i] = np.sum((y[:,k]-self.target_proccessed[:,k])* x_matrix[:,i]) +  self.w_matrix[k][i]#正则项
+                    
+                    derivative_matrix[k][i] = np.sum((y[:,k]-self.target_proccessed[:,k])* x_matrix[:,i])
+                    i = i + 1
+                k = k + 1
+            
+            #参数更新：
+            self.w_matrix = self.w_matrix - self.learning_rate * derivative_matrix
+
+            terminate = terminate + 1
+            print("迭代次数:",terminate)
+            if terminate >= 1500:#最大训练次数
+                return 
+    
+    def cross_entropy(self,y,t_one_of_k):
+        cross_entropy = -np.sum(t_one_of_k * np.log(y))/len(y)
+        return cross_entropy
+    
+    def predict_one_of_k(self,x):
+        x_matrix = self.data_proccessed_x(x)
+        z_matrix = self.w_matrix.dot(x_matrix.T)
+        z_matrix = z_matrix.T#转置 
+        z1_matrix = np.exp(z_matrix)#指数处理
+        y = z1_matrix
+        a = 0
+        for i in z1_matrix:
+            #denominator.append(np.sum(i))
+            y[a] = z1_matrix[a] / np.sum(i)
+            a = a + 1
+        y = np.zeros(list(z1_matrix.shape))
+        a = 0
+        for i in z1_matrix:
+            b = 0
+            max = np.max(i)
+            for j in i:
+                if j == max:
+                    y[a][b] = 1
+                    break
+                b = b + 1
+            a = a + 1
+        return y
+
+    def predict(self,x):
+        x_matrix = self.data_proccessed_x(x)
+        z_matrix = self.w_matrix.dot(x_matrix.T)
+        z_matrix = z_matrix.T#转置 
+        z1_matrix = np.exp(z_matrix)#指数处理
+        a = 0
+        for i in z1_matrix:
+            #denominator.append(np.sum(i))
+            z1_matrix[a] = z1_matrix[a] / np.sum(i)
+            a = a + 1
+        y = np.zeros(list(z1_matrix.shape))
+        a = 0
+        for i in z1_matrix:
+            b = 0
+            max = np.max(i)
+            for j in i:
+                if j == max:
+                    y[a][b] = 1
+                    break
+                b = b + 1
+            a = a + 1
+         
+        
+        output = []
+        for i in y:
+            a = 0
+            for j in self.target_type_one_of_k:
+                if (i == j).all():
+                    output.append(self.target_type[a])
+                    break
+                a  = a + 1
+        return output
+            
+
+        
+    
+
+
+filepath = "C:\\Users\\86136\\Desktop\\杂物\\人工智能与机器学习\\作业\\作业8\\optdigits.tra"
+data = np.loadtxt(filepath,dtype = int,delimiter=',')
+x = data[:,0:-1]
+target = data[:,-1]
+MLP = MLPLogisticRegression(x,target,0.00005)
+MLP.train(x,target)
+y = MLP.predict(x)
+print("训练集的预测值：\n",y)
+a = MLP.predict_one_of_k(x)
+b = MLP.data_proccessed_target(target)
+wrong_number = np.sum(np.absolute(a  -  b))/2
+print("训练集的错误个数:",wrong_number)
+print("对于训练集的预测准确率：",(len(target)-wrong_number) / len(target))
+
+filepath2 = "C:\\Users\\86136\\Desktop\\杂物\\人工智能与机器学习\\作业\\作业8\\optdigits.tes"
+data = np.loadtxt(filepath2,dtype = int,delimiter=',')
+x = data[:,0:-1]
+target = data[:,-1]
+y = MLP.predict(x)
+print("测试集的预测值：\n",y)
+a = MLP.predict_one_of_k(x)
+b = MLP.data_proccessed_target(target)
+wrong_number = np.sum(np.absolute(a  -  b))/2
+print("测试集的错误个数:",wrong_number)
+print("对于测试集的预测准确率：",(len(target)-wrong_number) / len(target))
